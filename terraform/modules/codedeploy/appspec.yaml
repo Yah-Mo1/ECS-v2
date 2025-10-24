@@ -1,0 +1,15 @@
+applicationName: "dev-codedeploy-app"
+deploymentGroupName: "dev-codedeploy-deployment-group"
+revision:
+  revisionType: AppSpecContent
+  appSpecContent:
+    content: |
+      version: 0.0
+      Resources:
+        - TargetService:
+            Type: AWS::ECS::Service
+            Properties:
+              TaskDefinition: ""
+              LoadBalancerInfo:
+                ContainerName: "ecs-v2-container"
+                ContainerPort: "8000"
