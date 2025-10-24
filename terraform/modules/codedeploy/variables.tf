@@ -3,11 +3,6 @@ variable "env" {
   description = "The Environment the resources are created within"
 }
 
-variable "service_role_arn" {
-  type        = string
-  description = "The ARN of the service role"
-}
-
 variable "ecs_cluster_name" {
   type        = string
   description = "The name of the ECS cluster"

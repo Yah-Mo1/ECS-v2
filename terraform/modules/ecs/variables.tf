@@ -110,3 +110,8 @@ variable "alb_sg_id" {
   type        = string
   description = "The ID of the ALB security group"
 }
+
+variable "task_role_name" {
+  type        = string
+  description = "The name of the task role"
+}

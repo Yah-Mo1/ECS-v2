@@ -31,6 +31,7 @@ module "ecs" {
   ecs_execution_role_name = var.ecs_execution_role_name
   alb_sg_id               = module.alb.alb_sg_id
   green_target_group_arn  = module.alb.green_target_group_arn
+  task_role_name = var.ecs_task_role_name
 }
 
 module "alb" {
@@ -67,7 +68,6 @@ module "codedeploy" {
   https_listener_arn      = module.alb.https_listener_arn
   blue_target_group_name  = module.alb.blue_target_group_name
   green_target_group_name = module.alb.green_target_group_name
-  service_role_arn        = module.ecs.ecs_service_role_arn
   ecs_service_id          = module.ecs.ecs_service_id
   region                  = var.region
   ecs_execution_role      = module.ecs.ecs_execution_role_arn
@@ -80,6 +80,7 @@ module "autoscaling" {
   ecs_service_name        = var.ecs_service_name
   max_capacity            = var.max_capacity
   min_capacity            = var.min_capacity
+  depends_on = [module.ecs]
 }
 //module "cloudfront" {
 //  source = "./modules/cloudfront"

@@ -2,6 +2,10 @@ data "aws_iam_role" "ecs_execution_role" {
   name = var.ecs_execution_role_name
 }
 
+data "aws_iam_role" "ecs_task_role" {
+  name = var.task_role_name
+}
+
 
 resource "aws_cloudwatch_log_group" "this" {
   name = "${var.env}-ecs-log-group"
@@ -41,6 +45,7 @@ resource "aws_ecs_task_definition" "ecs-task-definition" {
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   execution_role_arn       = data.aws_iam_role.ecs_execution_role.arn
+  task_role_arn            = data.aws_iam_role.ecs_task_role.arn
   cpu                      = var.ecs_task_cpu
   memory                   = var.ecs_task_memory
   container_definitions = templatefile("${path.module}/task_def_init.tpl", {
@@ -61,3 +66,5 @@ resource "aws_ecs_task_definition" "ecs-task-definition" {
   }
 
 }
+
+

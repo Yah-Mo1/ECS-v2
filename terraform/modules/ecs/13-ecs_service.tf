@@ -1,15 +1,10 @@
-data "aws_iam_role" "ecs_service_role" {
-  name = var.ecs_service_role_name
-}
-
 resource "aws_ecs_service" "this" {
   name             = var.ecs_service_name
   cluster          = var.ecs_cluster_name
   task_definition  = aws_ecs_task_definition.ecs-task-definition.arn
   desired_count    = var.desired_count
-  launch_type      = "FARGATE"
+  launch_type      = "FARGATE"  
   platform_version = "LATEST"
-
   deployment_controller {
     type = "CODE_DEPLOY"
   }

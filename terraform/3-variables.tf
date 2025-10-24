@@ -108,6 +108,11 @@ variable "ecs_execution_role_name" {
   description = "The name of the ECS execution role"
 }
 
+variable "ecs_task_role_name" {
+  type        = string
+  description = "The name of the ECS task role"
+}
+
 
 //ALB Module
 
