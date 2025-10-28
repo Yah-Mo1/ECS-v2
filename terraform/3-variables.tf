@@ -98,21 +98,10 @@ variable "cpu_architecture" {
   description = "The CPU architecture of the ECS task"
 }
 
-variable "ecs_service_role_name" {
-  type        = string
-  description = "The name of the ECS service role"
-}
-
 variable "ecs_execution_role_name" {
   type        = string
   description = "The name of the ECS execution role"
 }
-
-variable "ecs_task_role_name" {
-  type        = string
-  description = "The name of the ECS task role"
-}
-
 
 //ALB Module
 

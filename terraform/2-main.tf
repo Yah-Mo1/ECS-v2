@@ -27,11 +27,10 @@ module "ecs" {
   desired_count           = var.desired_count
   dynamodb_table_name     = module.dynamodb.table_name
   cpu_architecture        = var.cpu_architecture
-  ecs_service_role_name   = var.ecs_service_role_name
   ecs_execution_role_name = var.ecs_execution_role_name
   alb_sg_id               = module.alb.alb_sg_id
   green_target_group_arn  = module.alb.green_target_group_arn
-  task_role_name = var.ecs_task_role_name
+  enable_dynamodb_gateway_endpoint = true
 }
 
 module "alb" {
@@ -53,11 +52,11 @@ module "dynamodb" {
 
 
 module "route53" {
- source = "./modules/route53"
- domain_name = var.domain
- alb_dns_name = module.alb.dns_name
- alb_zone_id = module.alb.zone_id
- record_name = "ecs.${var.domain}"
+  source       = "./modules/route53"
+  domain_name  = var.domain
+  alb_dns_name = module.alb.dns_name
+  alb_zone_id  = module.alb.zone_id
+  record_name  = "ecs.${var.domain}"
 }
 
 module "codedeploy" {
@@ -75,21 +74,21 @@ module "codedeploy" {
 }
 
 module "autoscaling" {
-  source                  = "./modules/autoscaling"
-  ecs_cluster_name        = var.ecs_cluster_name
-  ecs_service_name        = var.ecs_service_name
-  max_capacity            = var.max_capacity
-  min_capacity            = var.min_capacity
-  depends_on = [module.ecs]
+  source           = "./modules/autoscaling"
+  ecs_cluster_name = var.ecs_cluster_name
+  ecs_service_name = var.ecs_service_name
+  max_capacity     = var.max_capacity
+  min_capacity     = var.min_capacity
+  depends_on       = [module.ecs]
 }
 //module "cloudfront" {
 //  source = "./modules/cloudfront"
 //}
 
-module "waf" {
-  source = "./modules/waf"
-  env = var.env
-  region = var.region
-  resource_arn = module.alb.alb_arn
-  depends_on = [module.alb]
-}
+# module "waf" {
+#   source       = "./modules/waf"
+#   env          = var.env
+#   region       = var.region
+#   resource_arn = module.alb.alb_arn
+#   depends_on   = [module.alb]
+# }
