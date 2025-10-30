@@ -8,7 +8,9 @@ permissions:
 
 env:
   AWS_REGION: eu-west-2
-  ENV: dev
+  ENVIRONMENT_DEV: dev
+  ENVIRONMENT_STAGING: staging
+  ENVIRONMENT_PROD: prod
 
 jobs:
   checkov-scan:
@@ -87,7 +89,7 @@ jobs:
 
       - name: Run Terraform Plan
         working-directory: terraform
-        run: terraform plan -var-file="environments/dev/dev.terraform.tfvars"
+        run: terraform plan -input=false -var-file="environments/${{env.ENVIRONMENT_DEV}}/${{env.ENVIRONMENT_DEV}}.terraform.tfvars" -out=tfplan
 
       # - name: Upload Terraform plan to GitHub
       #   uses: actions/upload-artifact@v4
