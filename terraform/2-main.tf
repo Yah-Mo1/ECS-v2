@@ -82,6 +82,7 @@ module "autoscaling" {
   max_capacity     = var.max_capacity
   min_capacity     = var.min_capacity
   env              = var.env
+  depends_on       = [module.ecs]
 }
 
 module "waf" {
