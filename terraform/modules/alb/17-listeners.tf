@@ -23,6 +23,10 @@ resource "aws_lb_listener" "HTTPS_Listener" {
       }
     }
   }
+
+  lifecycle {
+    ignore_changes = [default_action]
+  }
 }
 
 resource "aws_alb_listener" "l_8080" {

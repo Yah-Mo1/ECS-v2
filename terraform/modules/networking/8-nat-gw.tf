@@ -11,7 +11,7 @@ resource "aws_nat_gateway" "this" {
   subnet_id     = element(aws_subnet.public_subnet.*.id, count.index)
   tags = {
     Name        = "nat"
-    Environment = "${var.env}"
+    Environment = var.env
   }
   depends_on = [aws_internet_gateway.this, aws_eip.nat_eip]
 }

@@ -1,20 +1,23 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import RedirectResponse
-import os, hashlib, time
+import os, hashlib, time, logging
+from pydantic import BaseModel, AnyUrl
 from .ddb import put_mapping, get_mapping
 
 app = FastAPI()
+logger = logging.getLogger("app")
+
+
+class ShortenPayload(BaseModel):
+    url: AnyUrl
 
 @app.get("/healthz")
 def health():
     return {"status": "ok", "ts": int(time.time())}
 
 @app.post("/shorten")
-async def shorten(req: Request):
-    body = await req.json()
-    url = body.get("url")
-    if not url:
-        raise HTTPException(400, "url required")
+async def shorten(payload: ShortenPayload):
+    url = str(payload.url)
     short = hashlib.sha256(url.encode()).hexdigest()[:8]
     put_mapping(short, url)
     return {"short": short, "url": url}
@@ -25,3 +28,12 @@ def resolve(short_id: str):
     if not item:
         raise HTTPException(404, "not found")
     return RedirectResponse(item["url"])
+
+
+@app.middleware("http")
+async def log_errors(request: Request, call_next):
+    try:
+        return await call_next(request)
+    except Exception:
+        logger.exception("Unhandled error")
+        raise

@@ -61,15 +61,6 @@ variable "cpu_architecture" {
   description = "The CPU architecture of the ECS task"
 }
 
-variable "ecs_execution_role_name" {
-  type        = string
-  description = "The name of the ECS execution role"
-}
-
-variable "ecs_service_role_name" {
-  type        = string
-  description = "The name of the ECS service role"
-}
 
 variable "ecs_service_name" {
   type        = string
@@ -96,11 +87,6 @@ variable "container_port" {
   description = "The port of the container"
 }
 
-variable "private_route_table_ids" {
-  type        = list(string)
-  description = "The IDs of the private route tables"
-}
-
 variable "dynamodb_table_name" {
   type        = string
   description = "The name of the DynamoDB table"
@@ -109,4 +95,8 @@ variable "dynamodb_table_name" {
 variable "alb_sg_id" {
   type        = string
   description = "The ID of the ALB security group"
+}
+variable "kms_key_arn" {
+  type        = string
+  description = "The ARN of the KMS key"
 }

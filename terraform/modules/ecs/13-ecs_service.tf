@@ -1,14 +1,11 @@
-data "aws_iam_role" "ecs_service_role" {
-  name = var.ecs_service_role_name
-}
-
 resource "aws_ecs_service" "this" {
-  name             = var.ecs_service_name
-  cluster          = var.ecs_cluster_name
-  task_definition  = aws_ecs_task_definition.ecs-task-definition.arn
-  desired_count    = var.desired_count
-  launch_type      = "FARGATE"
-  platform_version = "LATEST"
+  name                   = var.ecs_service_name
+  cluster                = aws_ecs_cluster.this.name
+  task_definition        = aws_ecs_task_definition.ecs-task-definition.arn
+  desired_count          = var.desired_count
+  launch_type            = "FARGATE"
+  platform_version       = "LATEST"
+  enable_execute_command = true
 
   deployment_controller {
     type = "CODE_DEPLOY"
@@ -31,9 +28,9 @@ resource "aws_ecs_service" "this" {
   lifecycle {
     ignore_changes = [
       task_definition,
-      desired_count,
+      load_balancer,
       platform_version,
-      load_balancer
+      desired_count
     ]
   }
 }

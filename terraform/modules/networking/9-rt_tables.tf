@@ -23,6 +23,7 @@ resource "aws_route_table" "private_rt" {
   }
 
 
+
   tags = {
     Environment = var.env
   }

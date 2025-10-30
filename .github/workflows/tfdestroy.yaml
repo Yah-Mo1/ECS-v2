@@ -1,0 +1,56 @@
+name: Terraform Destroy workflow
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Terraform Apply"]
+    types:
+      - completed
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  AWS_REGION: eu-west-2
+  ENV: dev
+jobs:
+  destroy:
+    name: Destroy Terraform infrastructure
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./terraform
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.12.2
+
+      - name: Configure AWS Credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@v4.3.1
+        with:
+          audience: sts.amazonaws.com
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+
+      - name: Test AWS Credentials
+        run: aws sts get-caller-identity
+
+      - name: Terraform Init
+        working-directory: terraform
+        run: |
+          terraform init
+
+      - name: Terraform Workspace Select or Create
+        working-directory: terraform
+        run: terraform workspace select ${{ env.ENV }} || terraform workspace new ${{ env.ENV }}
+
+      - name: Terraform Destroy
+        working-directory: terraform
+        run: terraform destroy -auto-approve

@@ -1,0 +1,85 @@
+name: Terraform Plan Workflow
+
+on: workflow_dispatch
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  AWS_REGION: eu-west-2
+  ENV: dev
+
+jobs:
+  checkov-scan:
+    continue-on-error: true
+    name: Checkov Terraform Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Checkov
+        run: pip install checkov
+
+      - name: Run Checkov
+        working-directory: terraform
+        run: checkov -d . --quiet --skip-check CKV_AWS_260,CKV_AWS_382,CKV_AWS_150,CKV_AWS_2,CKV_AWS_111,CKV_AWS_356,CKV_AWS_109,CKV_AWS_130
+
+  tflint-scan:
+    continue-on-error: true
+    name: TF Lint
+    runs-on: ubuntu-latest
+    needs: [checkov-scan]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install tflint
+        run: |
+          curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+
+      - name: Run tflint
+        working-directory: terraform
+        run: tflint --recursive
+        continue-on-error: true
+
+  terraform-plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    needs: [checkov-scan, tflint-scan]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@v4.3.1
+        with:
+          audience: sts.amazonaws.com
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE_ARN }}
+
+      - name: Test AWS Credentials
+        run: aws sts get-caller-identity
+
+      - name: Terraform Init
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.5.0"
+
+      - name: Run Terraform Init
+        run: terraform init
+
+      - name: Run Terraform Format
+        run: terraform fmt
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Workspace Select
+        run: terraform workspace select ${{ env.ENV }} || terraform workspace new ${{ env.ENV }}
+
+      - name: Run Terraform Plan
+        run: terraform plan

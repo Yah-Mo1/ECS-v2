@@ -4,12 +4,6 @@ variable "env" {
 
 }
 
-variable "region" {
-  type        = string
-  description = "The region the VPC exists in"
-
-}
-
 variable "vpc_cidr_block" {
   type        = string
   description = "The CIDR block for the VPC"
