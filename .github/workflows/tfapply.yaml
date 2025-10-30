@@ -2,9 +2,9 @@ name: Terraform Apply Workflow
 
 on: workflow_dispatch
 
-# permissions:
-#   contents: read
-#   id-token: write
+permissions:
+  contents: read
+  id-token: write
 
 env:
   AWS_REGION: eu-west-2
