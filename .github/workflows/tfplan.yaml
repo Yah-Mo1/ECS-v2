@@ -85,7 +85,7 @@ jobs:
 
       - name: Terraform Workspace Select
         working-directory: terraform
-        run: terraform workspace select ${{ env.ENV }} || terraform workspace new ${{ env.ENV }}
+        run: terraform workspace select ${{ env.ENVIRONMENT_DEV }} || terraform workspace new ${{ env.ENVIRONMENT_DEV }}
 
       - name: Run Terraform Plan
         working-directory: terraform
