@@ -11,5 +11,9 @@ output "ecs_service_id" {
 }
 
 output "ecs_execution_role_arn" {
-  value = data.aws_iam_role.ecs_execution_role.arn
+  value = aws_iam_role.ecs_execution_role.arn
+}
+
+output "ecs_task_sg_id" {
+  value = aws_security_group.ecs_task_sg.id
 }

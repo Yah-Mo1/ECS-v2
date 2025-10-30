@@ -59,4 +59,6 @@ terragrunt
 .env
 .licensei.cache
 bin
+*.terraform.tfvars
+trivy-results.sarif
 terraform.tfvars

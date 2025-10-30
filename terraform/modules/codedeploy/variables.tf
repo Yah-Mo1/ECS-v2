@@ -27,20 +27,3 @@ variable "green_target_group_name" {
   type        = string
   description = "The name of the green target group"
 }
-
-variable "region" {
-  type        = string
-  description = "The region the resources are created in"
-
-}
-
-variable "ecs_execution_role" {
-  type        = string
-  description = "The ARN of the ECS execution role"
-}
-
-
-variable "ecs_service_id" {
-  type        = string
-  description = "The ARN of the ECS service"
-}

@@ -1,4 +1,4 @@
-data "aws_caller_identity" "current" {}
+
 
 data "aws_iam_policy_document" "assume_role" {
   statement {
@@ -46,7 +46,7 @@ resource "aws_codedeploy_deployment_group" "this" {
   }
 
   ecs_service {
-    cluster_name = var.ecs_cluster_name
+    cluster_name = "${var.env}-${var.ecs_cluster_name}"
     service_name = var.ecs_service_name
   }
 

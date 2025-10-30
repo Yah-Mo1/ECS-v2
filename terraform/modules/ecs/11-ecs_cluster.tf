@@ -5,7 +5,7 @@ data "aws_ecr_repository" "this" {
 
 
 resource "aws_ecs_cluster" "this" {
-  name = var.ecs_cluster_name
+  name = "${var.env}-${var.ecs_cluster_name}"
 
   setting {
     name  = "containerInsights"

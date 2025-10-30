@@ -1,3 +1,4 @@
+#VPC Endpoints Security Group
 resource "aws_security_group" "vpc_endpoints" {
   name_prefix = "${var.env}-vpc-endpoints"
   description = "Associated to ECR/s3 VPC Endpoints"
@@ -8,10 +9,11 @@ resource "aws_security_group" "vpc_endpoints" {
     protocol        = "tcp"
     from_port       = 443
     to_port         = 443
-    security_groups = [aws_security_group.ecs_task_sg.id]
+    security_groups = [var.ecs_task_sg_id]
   }
 }
 
+#ECR VPC Endpoint
 resource "aws_vpc_endpoint" "ecr_dkr" {
   vpc_id              = var.vpc_id
   service_name        = "com.amazonaws.${var.region}.ecr.dkr"
@@ -26,6 +28,7 @@ resource "aws_vpc_endpoint" "ecr_dkr" {
   }
 }
 
+#ECR API VPC Endpoint
 resource "aws_vpc_endpoint" "ecr_api" {
   vpc_id              = var.vpc_id
   service_name        = "com.amazonaws.${var.region}.ecr.api"
@@ -40,6 +43,7 @@ resource "aws_vpc_endpoint" "ecr_api" {
   }
 }
 
+#S3 VPC Endpoint
 resource "aws_vpc_endpoint" "s3" {
   vpc_id            = var.vpc_id
   service_name      = "com.amazonaws.${var.region}.s3"
@@ -53,24 +57,10 @@ resource "aws_vpc_endpoint" "s3" {
 }
 
 
+#DynamoDB VPC Endpoint
 resource "aws_vpc_endpoint" "dynamodb_endpoint" {
-  count             = var.enable_dynamodb_gateway_endpoint ? 1 : 0
   vpc_id            = var.vpc_id
   service_name      = "com.amazonaws.${var.region}.dynamodb"
   vpc_endpoint_type = "Gateway"
   route_table_ids   = var.private_route_table_ids
-  # policy = jsonencode({
-  #   "Version" : "2012-10-17",
-  #   "Statement" : [
-  #     {
-  #       "Effect" : "Allow",
-  #       "Principal" : "*",
-  #       "Action" : "*",
-  #       "Resource" : "*"
-  #     }
-  #   ]
-  # })
-  # tags = {
-  #   "Name" = "${var.env}-dynamodb-endpoint"
-  # }
 }

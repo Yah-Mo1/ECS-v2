@@ -1,11 +1,18 @@
 
 
+variable "env" {
+  description = "The environment the resources are created within"
+  type        = string
+}
+
 variable "ecs_cluster_name" {
   description = "The name of the ECS cluster"
+  type        = string
 }
 
 variable "ecs_service_name" {
   description = "The name of the ECS service"
+  type        = string
 }
 
 

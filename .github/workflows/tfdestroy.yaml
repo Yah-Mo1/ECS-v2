@@ -13,7 +13,7 @@ permissions:
 
 env:
   AWS_REGION: eu-west-2
-
+  ENV: dev
 jobs:
   destroy:
     name: Destroy Terraform infrastructure
@@ -46,6 +46,10 @@ jobs:
         working-directory: terraform
         run: |
           terraform init
+
+      - name: Terraform Workspace Select or Create
+        working-directory: terraform
+        run: terraform workspace select ${{ env.ENV }} || terraform workspace new ${{ env.ENV }}
 
       - name: Terraform Destroy
         working-directory: terraform
