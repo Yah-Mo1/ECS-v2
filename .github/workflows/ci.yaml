@@ -8,7 +8,7 @@ permissions:
 
 env:
   AWS_REGION: eu-west-2
-  ECR_REPOSITORY: ecs-project-repository
+  ECR_REPOSITORY: ecs-v2-ecr
 
 jobs:
   build-and-push:
