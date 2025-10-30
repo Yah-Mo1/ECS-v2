@@ -1,36 +1,21 @@
 name: Terraform Apply Workflow
 
-on:
-  workflow_run:
-    workflows: ["Terraform Plan"]
-    types:
-      - completed
+on: workflow_dispatch
 
-permissions:
-  contents: read
-  id-token: write
+# permissions:
+#   contents: read
+#   id-token: write
 
 env:
   AWS_REGION: eu-west-2
-  ENV: dev
+  ENVIRONMENT_DEV: dev
+  ENVIRONMENT_STAGING: staging
+  ENVIRONMENT_PROD: prod
 
 jobs:
-  # approve:
-  #   name: Manual approval before apply
-  #   runs-on: ubuntu-latest
-  #   environment:
-  #     name: production
-
-  #   # requires protection on the environment for approval in GitHub UI
-  #   steps:
-  #     - run: echo "Awaiting approval..."
-
   terraform-apply:
     name: Terraform Apply
     runs-on: ubuntu-latest
-    # needs: approve
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -40,7 +25,7 @@ jobs:
         with:
           audience: sts.amazonaws.com
           aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE_ARN }}
 
       - name: Test AWS Credentials
         run: aws sts get-caller-identity
@@ -50,20 +35,14 @@ jobs:
         with:
           terraform_version: 1.12.2
 
-      # - name: Download tfplan artifact
-      #   uses: actions/download-artifact@v4
-      #   with:
-      #     name: tfplan-${{ github.event.workflow_run.id }}
-      #     path: terraform/
-
       - name: Terraform Init
         working-directory: terraform
         run: terraform init -input=false
 
       - name: Terraform Workspace Select or Create
         working-directory: terraform
-        run: terraform workspace select ${{ env.ENV }} || terraform workspace new ${{ env.ENV }}
+        run: terraform workspace select ${{ env.ENVIRONMENT_DEV }} || terraform workspace new ${{ env.ENVIRONMENT_DEV }}
 
       - name: Terraform Apply
         working-directory: terraform
-        run: terraform apply -auto-approve -input=false
+        run: terraform apply -auto-approve -input=false -var-file="environments/${{env.ENVIRONMENT_DEV}}/${{env.ENVIRONMENT_DEV}}.terraform.tfvars"

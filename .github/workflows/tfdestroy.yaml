@@ -1,19 +1,12 @@
 name: Terraform Destroy workflow
 
-on:
-  workflow_dispatch:
-  workflow_run:
-    workflows: ["Terraform Apply"]
-    types:
-      - completed
-
-permissions:
-  contents: read
-  id-token: write
+on: workflow_dispatch
 
 env:
   AWS_REGION: eu-west-2
-  ENV: dev
+  ENVIRONMENT_DEV: dev
+  ENVIRONMENT_STAGING: staging
+  ENVIRONMENT_PROD: prod
 jobs:
   destroy:
     name: Destroy Terraform infrastructure
@@ -37,7 +30,7 @@ jobs:
         with:
           audience: sts.amazonaws.com
           aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE_ARN }}
 
       - name: Test AWS Credentials
         run: aws sts get-caller-identity
@@ -49,7 +42,7 @@ jobs:
 
       - name: Terraform Workspace Select or Create
         working-directory: terraform
-        run: terraform workspace select ${{ env.ENV }} || terraform workspace new ${{ env.ENV }}
+        run: terraform workspace select ${{ env.ENVIRONMENT_DEV }} || terraform workspace new ${{ env.ENVIRONMENT_DEV }}
 
       - name: Terraform Destroy
         working-directory: terraform
