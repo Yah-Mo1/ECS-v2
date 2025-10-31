@@ -46,8 +46,11 @@ jobs:
         run: |
           # Build a docker container for ARM64 architecture (matching ECS task config)
           # and push it to ECR so that it can be deployed to ECS.
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./app --platform linux/arm64
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker buildx build \
+            --platform linux/arm64 \
+            --tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            --push \
+            ./app
 
       - name: Run Trivy vulnerability scanner
         continue-on-error: true
