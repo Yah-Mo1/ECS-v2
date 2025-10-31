@@ -71,18 +71,6 @@ POLICY
 }
 
 
-#KMS Key for ALB access logs
-resource "aws_kms_key" "alb_access_logs_key" {
-  description             = "KMS key for ALB access logs"
-  enable_key_rotation     = true
-  deletion_window_in_days = 7
-  policy                  = aws_kms_key.alb_access_logs_key_policy.arn
-
-  tags = {
-    Environment = var.env
-  }
-}
-
 
 resource "aws_s3_bucket" "alb_access_logs" {
   bucket        = "${var.env}-lb-logs-1234567890"
