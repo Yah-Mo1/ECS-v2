@@ -45,4 +45,4 @@ jobs:
 
       - name: Terraform Apply
         working-directory: terraform
-        run: terraform apply -auto-approve -input=false -lock=false -var-file="environments/${{env.ENVIRONMENT_DEV}}/${{env.ENVIRONMENT_DEV}}.terraform.tfvars"
+        run: terraform apply -auto-approve -input=false -var-file="environments/${{env.ENVIRONMENT_DEV}}/${{env.ENVIRONMENT_DEV}}.terraform.tfvars"

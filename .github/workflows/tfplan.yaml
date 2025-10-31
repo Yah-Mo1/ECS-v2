@@ -89,7 +89,7 @@ jobs:
 
       - name: Run Terraform Plan
         working-directory: terraform
-        run: terraform plan -input=false -lock=false -var-file="environments/${{env.ENVIRONMENT_DEV}}/${{env.ENVIRONMENT_DEV}}.terraform.tfvars" -out=tfplan
+        run: terraform plan -input=false -var-file="environments/${{env.ENVIRONMENT_DEV}}/${{env.ENVIRONMENT_DEV}}.terraform.tfvars" -out=tfplan
 
       # - name: Upload Terraform plan to GitHub
       #   uses: actions/upload-artifact@v4
