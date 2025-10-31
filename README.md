@@ -307,28 +307,6 @@ WAF is attached to the ALB with the following managed rule sets:
 - AWS Managed Rules Unix Rule Set
 - AWS Managed Rules Windows Rule Set
 
-## Deliverables Checklist
-
-### ✅ Service Endpoints
-
-- [x] `GET /healthz` → `{"status": "ok"}`
-- [x] `POST /shorten` → Returns `{"short": "...", "url": "..."}`
-- [x] `GET /{short}` → HTTP 302 redirect
-
-### ✅ CI/CD Pipeline
-
-- [x] CI: Build, test, scan (Trivy), push to ECR on main
-- [x] CD: Terraform plan (PR) and apply (main) using OIDC
-- [x] CodeDeploy canary/blue-green deployment triggered
-
-### ✅ Evidence Required
-
-- [ ] Screenshot of OIDC role trust policy
-- [ ] CodeDeploy deployment screen showing canary + rollback test
-- [ ] WAF associated to ALB
-- [ ] VPC Endpoints list (S3/DDB/ECR/logs/etc.)
-- [ ] No NAT gateways on the bill
-
 ## Decisions & Trade-offs
 
 ### Architecture Decisions
@@ -351,20 +329,6 @@ WAF is attached to the ALB with the following managed rule sets:
 - **VPC Endpoints:** Interface endpoints incur hourly charges (~$7/month + data processing)
 - **ALB + WAF:** Fixed hourly costs + per-GB/request charges
 - **DynamoDB PAY_PER_REQUEST:** Pay only for actual usage, but storage costs apply
-
-### Teardown Instructions
-
-**Immediately after completing your deployment and taking screenshots:**
-
-```bash
-cd terraform
-terraform workspace select dev
-terraform destroy -var-file=environments/dev/dev.terraform.tfvars -auto-approve
-```
-
-Or use the GitHub Actions destroy workflow (use with caution).
-
-**Note:** Even with no traffic, ALB, WAF, and VPC endpoints continue to incur charges until deleted.
 
 ## Operations & Troubleshooting
 
