@@ -1,8 +1,3 @@
-data "aws_ecs_service" "this" {
-  cluster_name = "${var.env}-${var.ecs_cluster_name}"
-  service_name = var.ecs_service_name
-}
-
 data "aws_iam_policy_document" "assume_role" {
   statement {
     effect = "Allow"
