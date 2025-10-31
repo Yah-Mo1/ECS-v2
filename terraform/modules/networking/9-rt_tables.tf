@@ -16,14 +16,6 @@ resource "aws_route_table" "public_rt" {
 resource "aws_route_table" "private_rt" {
   vpc_id = aws_vpc.this.id
   count  = length(data.aws_availability_zones.available.names)
-
-  route {
-    cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = element(aws_nat_gateway.this.*.id, count.index)
-  }
-
-
-
   tags = {
     Environment = var.env
   }
