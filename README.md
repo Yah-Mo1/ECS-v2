@@ -16,6 +16,33 @@ This project implements a production-grade URL shortener service on AWS. The ser
 - `GET /healthz`
   → Returns `{"status": "ok"}` (used for health checks)
 
+## Application Status
+
+The application is live and accessible via HTTPS. FastAPI automatically generates interactive API documentation using Swagger UI:
+
+**Live Application:**
+
+- **Swagger UI:** `https://<your-domain>/docs`
+- **ReDoc:** `https://<your-domain>/redoc`
+- **OpenAPI JSON:** `https://<your-domain>/openapi.json`
+
+### Interactive API Documentation
+
+The Swagger UI provides interactive documentation for all endpoints:
+
+- **GET `/healthz`** — Health check endpoint (returns `{"status": "ok"}`)
+- **POST `/shorten`** — Create a short URL from a long URL
+  - Request body: `{"url": "https://example.com/very/long/url"}`
+  - Response: `{"short": "abc123ef", "url": "https://example.com/very/long/url"}`
+- **GET `/{short_id}`** — Resolve short ID to original URL (returns HTTP 302 redirect)
+
+The API documentation includes:
+
+- **FastAPI** version 0.1.0
+- **OpenAPI Specification** 3.1
+- Request/response schemas (`ShortenPayload`, `ValidationError`, etc.)
+- Interactive testing capability directly from the browser
+
 ## Architecture Highlights
 
 ![Architecture](images/architecture-diagram.png)
@@ -88,11 +115,11 @@ url-shortener-app/
 
 1. **Configure Terraform Backend**
 
-   The Terraform state is stored in S3 with DynamoDB locking. Configure the backend in `terraform/1-backend.tf`:
+   The Terraform state is stored in S3 with State locking. Configure the backend in `terraform/1-backend.tf`:
 
    ```bash
    cd terraform
-   terraform init -backend-config="dynamodb_table=<your-lock-table>"
+   terraform init
    ```
 
 2. **Set Up GitHub OIDC**
@@ -168,7 +195,6 @@ export AWS_ENDPOINT_URL=http://localhost:4566
 - **Triggers:** Manual (`workflow_dispatch`)
 - **Jobs:**
   - Build Docker image for ARM64 architecture
-  - Run unit tests (can be added)
   - Scan image with Trivy vulnerability scanner
   - Push image to Amazon ECR
 
@@ -178,7 +204,7 @@ export AWS_ENDPOINT_URL=http://localhost:4566
 - **Jobs:**
   - Run Checkov security scanning
   - Run TFLint for Terraform best practices
-  - Initialize Terraform backend
+  - Initialise Terraform backend
   - Validate and format Terraform code
   - Select/create workspace (dev/staging/prod)
   - Generate Terraform plan
@@ -187,10 +213,9 @@ export AWS_ENDPOINT_URL=http://localhost:4566
 
 - **Triggers:** Manual (`workflow_dispatch`)
 - **Jobs:**
-  - Initialize Terraform
+  - Initialise Terraform
   - Select workspace
   - Apply Terraform changes
-  - Triggers CodeDeploy canary deployment (if ECS service updated)
 
 #### 4. Terraform Destroy (`.github/workflows/tfdestroy.yaml`)
 
@@ -214,7 +239,7 @@ All workflows use **GitHub OIDC** to assume an AWS IAM role. No long-lived crede
 ```bash
 cd terraform
 
-# Initialize and select workspace
+# Initialise and select workspace
 terraform init
 terraform workspace select dev || terraform workspace new dev
 
@@ -230,7 +255,6 @@ terraform apply -var-file=environments/dev/dev.terraform.tfvars
 1. Push code to trigger CI workflow (or run manually)
 2. Run "Terraform Plan" workflow and review the plan
 3. Run "Terraform Apply" workflow to deploy
-4. CodeDeploy automatically performs blue/green deployment
 
 ### Blue/Green Deployments
 
@@ -309,7 +333,7 @@ WAF is attached to the ALB with the following managed rule sets:
 
 ### Architecture Decisions
 
-- **ECS Fargate over Lambda:** Better suited for containerized apps with persistent connections and predictable performance
+- **ECS Fargate over Lambda:** Better suited for containerised apps with persistent connections and predictable performance
 - **Private subnets only:** Enhanced security by eliminating public IP exposure
 - **VPC Endpoints over NAT Gateways:** Cost savings (~$32/month per NAT gateway) while maintaining connectivity
 - **PAY_PER_REQUEST DynamoDB:** Suitable for variable/unpredictable traffic; scales automatically
@@ -327,19 +351,6 @@ WAF is attached to the ALB with the following managed rule sets:
 - **VPC Endpoints:** Interface endpoints incur hourly charges (~$7/month + data processing)
 - **ALB + WAF:** Fixed hourly costs + per-GB/request charges
 - **DynamoDB PAY_PER_REQUEST:** Pay only for actual usage, but storage costs apply
-
-## ⚠️ Cost Warning & Teardown
-
-**IMPORTANT:** This project deploys real AWS infrastructure that incurs costs if left running.
-
-### Cost-Incurring Resources
-
-- **Application Load Balancer:** ~$16/month + data transfer
-- **AWS WAF:** ~$1/month per rule + per-request charges
-- **ECS Fargate:** Pay for task runtime (CPU/memory)
-- **DynamoDB:** Storage costs even with PAY_PER_REQUEST
-- **VPC Endpoints:** Interface endpoints ~$7/month each
-- **Route53:** If configured, ~$0.50/month per hosted zone
 
 ### Teardown Instructions
 
@@ -370,21 +381,6 @@ Or use the GitHub Actions destroy workflow (use with caution).
 - **WAF Logs:** CloudWatch Logs group `aws-waf-log-group` (if enabled)
 
 ### Common Issues
-
-#### Terraform State Lock
-
-**Error:** `Error acquiring the state lock`
-
-**Solution:**
-
-```bash
-# Check for stale locks in DynamoDB
-aws dynamodb get-item \
-  --table-name <your-lock-table> \
-  --key '{"LockID": {"S": "..."}}'
-
-# Or use S3 lockfile cleanup (if using S3 locking)
-```
 
 #### ECS Tasks Not Starting
 
@@ -424,42 +420,8 @@ aws dynamodb get-item \
 - **CloudWatch Metrics:** ECS service metrics, ALB request/response metrics, WAF metrics
 - **Container Insights:** Recommended for detailed ECS performance metrics
 
-**Optional Enhancements:**
+## Application Screenshot
 
-- CloudWatch Dashboard for p50/p95 latency, 5xx errors, healthy host count
-- CloudWatch Alarms for service health
-- SNS notifications for critical alerts
+![FastAPI Swagger UI](images/fastapi-swagger-ui.png)
 
-## Bonus Features (Optional Extensions)
-
-### Application Enhancements
-
-- **Analytics endpoint:** `GET /stats/{short}` to track redirect hits
-- **TTL for shortened links:** Add expiry using DynamoDB TTL attribute
-- **Bulk shorten:** `POST /bulk-shorten` for multiple URLs
-- **Metadata storage:** Store `created_at`, `creator_ip`, etc.
-
-### AWS Integrations
-
-- **SQS/Kinesis:** Push click events for async processing
-- **Firehose:** Stream request logs to S3
-- **Parameter Store/Secrets Manager:** Replace `TABLE_NAME` env var
-- **CloudFront:** Add CDN in front of ALB with caching
-
-### Security Enhancements
-
-- **API Gateway:** Add API key authentication in front of ALB
-- **Rate limiting:** Add IP-based rate limiting via WAF rules
-
-### Monitoring
-
-- **CloudWatch Dashboard:** p50/p95 latency, 5xx errors, healthy host count
-- **Container Insights:** Enhanced ECS performance monitoring
-
-## License
-
-MIT
-
-## Acknowledgments
-
-This project builds upon the tradition of the CoderCo ECS Project, incorporating modern AWS patterns, security best practices, and production-ready deployment strategies.
+The FastAPI interactive API documentation showcasing the live URL shortener service endpoints.
