@@ -1,12 +1,9 @@
 data "aws_caller_identity" "current" {}
 
-#KMS key policy for ALB access logs
-#KMS Key for ALB access logs
-resource "aws_kms_key" "alb_access_logs_key_policy" {
+resource "aws_kms_key" "alb_access_logs_key" {
   description             = "KMS key for ALB access logs"
   enable_key_rotation     = true
   deletion_window_in_days = 7
-
 
   policy = <<POLICY
 {
@@ -14,10 +11,10 @@ resource "aws_kms_key" "alb_access_logs_key_policy" {
   "Id": "default",
   "Statement": [
     {
-      "Sid": "DefaultAllow",
+      "Sid": "EnableRootPermissions",
       "Effect": "Allow",
       "Principal": {
-        "AWS": "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/awsUser"
+        "AWS": "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
       },
       "Action": "kms:*",
       "Resource": "*"
@@ -72,6 +69,7 @@ POLICY
     Environment = var.env
   }
 }
+
 
 #KMS Key for ALB access logs
 resource "aws_kms_key" "alb_access_logs_key" {
