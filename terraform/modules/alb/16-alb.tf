@@ -8,65 +8,63 @@ resource "aws_kms_key" "alb_access_logs_key" {
   deletion_window_in_days = 7
 
 
-  policy = <<POLICY
-{
-  "Version": "2012-10-17",
-  "Id": "default",
-  "Statement": [
-    {
-      "Sid": "DefaultAllow",
-      "Effect": "Allow",
-      "Principal": {
-        "AWS": "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/awsUser"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Id      = "default"
+    Statement = [
+      {
+        Sid    = "EnableRootPermissions"
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        }
+        Action   = "kms:*"
+        Resource = "*"
       },
-      "Action": "kms:*",
-      "Resource": "*"
-    },
-    {
-      "Sid": "AllowELBLogDelivery",
-      "Effect": "Allow",
-      "Principal": {
-        "Service": "logdelivery.elasticloadbalancing.amazonaws.com"
+      {
+        Sid    = "AllowELBLogDelivery"
+        Effect = "Allow"
+        Principal = {
+          Service = "logdelivery.elasticloadbalancing.amazonaws.com"
+        }
+        Action = [
+          "kms:Encrypt",
+          "kms:GenerateDataKey*"
+        ]
+        Resource = "*"
       },
-      "Action": [
-        "kms:Encrypt",
-        "kms:GenerateDataKey*"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Sid": "AllowS3UseOfTheKey",
-      "Effect": "Allow",
-      "Principal": {
-        "Service": "s3.amazonaws.com"
+      {
+        Sid    = "AllowS3UseOfTheKey"
+        Effect = "Allow"
+        Principal = {
+          Service = "s3.amazonaws.com"
+        }
+        Action = [
+          "kms:Decrypt",
+          "kms:Encrypt",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey"
+        ]
+        Resource = "*"
       },
-      "Action": [
-        "kms:Decrypt",
-        "kms:Encrypt",
-        "kms:ReEncrypt*",
-        "kms:GenerateDataKey*",
-        "kms:DescribeKey"
-      ],
-      "Resource": "*"
-    },
-    {
-      "Sid": "AllowSNSServiceUse",
-      "Effect": "Allow",
-      "Principal": {
-        "Service": "sns.amazonaws.com"
-      },
-      "Action": [
-        "kms:Decrypt",
-        "kms:Encrypt",
-        "kms:ReEncrypt*",
-        "kms:GenerateDataKey*",
-        "kms:DescribeKey"
-      ],
-      "Resource": "*"
-    }
-  ]
-}
-POLICY
+      {
+        Sid    = "AllowSNSServiceUse"
+        Effect = "Allow"
+        Principal = {
+          Service = "sns.amazonaws.com"
+        }
+        Action = [
+          "kms:Decrypt",
+          "kms:Encrypt",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
 
   tags = {
     Environment = var.env

@@ -73,6 +73,7 @@ module "codedeploy" {
   https_listener_arn      = module.alb.https_listener_arn
   blue_target_group_name  = module.alb.blue_target_group_name
   green_target_group_name = module.alb.green_target_group_name
+  depends_on              = [module.ecs]
 }
 
 module "autoscaling" {

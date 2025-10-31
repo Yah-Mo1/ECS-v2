@@ -35,23 +35,28 @@ jobs:
         with:
           mask-password: "true"
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: latest
         run: |
-          # Build a docker container and
-          # push it to ECR so that it can
-          # be deployed to ECS.
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./app
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          # Build a docker container for ARM64 architecture (matching ECS task config)
+          # and push it to ECR so that it can be deployed to ECS.
+          docker buildx build \
+            --platform linux/arm64 \
+            --tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            --push \
+            ./app
 
       - name: Run Trivy vulnerability scanner
         continue-on-error: true
         uses: aquasecurity/trivy-action@0.28.0
         with:
-          image-ref: ${{ steps.build-image.outputs.image }}
+          image-ref: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
           format: "sarif"
           output: "trivy-results.sarif"
 
