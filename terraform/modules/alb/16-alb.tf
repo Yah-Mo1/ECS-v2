@@ -74,7 +74,7 @@ POLICY
 
 resource "aws_s3_bucket" "alb_access_logs" {
   # Include account ID to ensure global uniqueness
-  bucket        = "${var.env}-lb-logs-${data.aws_caller_identity.current.account_id}"
+  bucket        = "${var.env}-lb-logs-asdujsadjsadjasjd9q291312313§231§"
   force_destroy = true
   tags = {
     Environment = var.env
