@@ -1,64 +1,75 @@
 data "aws_caller_identity" "current" {}
 
 #KMS key policy for ALB access logs
-data "aws_iam_policy_document" "alb_access_logs_key_policy" {
-  statement {
-    sid    = "EnableRootPermissions"
-    effect = "Allow"
-    principals {
-      type        = "AWS"
-      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
-    }
-    actions   = ["kms:*"]
-    resources = ["*"]
-  }
+#KMS Key for ALB access logs
+resource "aws_kms_key" "alb_access_logs_key_policy" {
+  description             = "KMS key for ALB access logs"
+  enable_key_rotation     = true
+  deletion_window_in_days = 7
 
-  statement {
-    sid    = "AllowELBLogDelivery"
-    effect = "Allow"
-    principals {
-      type        = "Service"
-      identifiers = ["logdelivery.elasticloadbalancing.amazonaws.com"]
-    }
-    actions = [
-      "kms:Encrypt",
-      "kms:GenerateDataKey*"
-    ]
-    resources = ["*"]
-  }
 
-  statement {
-    sid    = "AllowS3UseOfTheKey"
-    effect = "Allow"
-    principals {
-      type        = "Service"
-      identifiers = ["s3.amazonaws.com"]
+  policy = <<POLICY
+{
+  "Version": "2012-10-17",
+  "Id": "default",
+  "Statement": [
+    {
+      "Sid": "DefaultAllow",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/awsUser"
+      },
+      "Action": "kms:*",
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowELBLogDelivery",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "logdelivery.elasticloadbalancing.amazonaws.com"
+      },
+      "Action": [
+        "kms:Encrypt",
+        "kms:GenerateDataKey*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowS3UseOfTheKey",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "s3.amazonaws.com"
+      },
+      "Action": [
+        "kms:Decrypt",
+        "kms:Encrypt",
+        "kms:ReEncrypt*",
+        "kms:GenerateDataKey*",
+        "kms:DescribeKey"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowSNSServiceUse",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "sns.amazonaws.com"
+      },
+      "Action": [
+        "kms:Decrypt",
+        "kms:Encrypt",
+        "kms:ReEncrypt*",
+        "kms:GenerateDataKey*",
+        "kms:DescribeKey"
+      ],
+      "Resource": "*"
     }
-    actions = [
-      "kms:Decrypt",
-      "kms:Encrypt",
-      "kms:ReEncrypt*",
-      "kms:GenerateDataKey*",
-      "kms:DescribeKey"
-    ]
-    resources = ["*"]
-  }
+  ]
+}
+POLICY
 
-  statement {
-    sid    = "AllowSNSServiceUse"
-    effect = "Allow"
-    principals {
-      type        = "Service"
-      identifiers = ["sns.amazonaws.com"]
-    }
-    actions = [
-      "kms:Decrypt",
-      "kms:Encrypt",
-      "kms:ReEncrypt*",
-      "kms:GenerateDataKey*",
-      "kms:DescribeKey"
-    ]
-    resources = ["*"]
+  tags = {
+    Environment = var.env
   }
 }
 
@@ -67,7 +78,7 @@ resource "aws_kms_key" "alb_access_logs_key" {
   description             = "KMS key for ALB access logs"
   enable_key_rotation     = true
   deletion_window_in_days = 7
-  policy                  = data.aws_iam_policy_document.alb_access_logs_key_policy.json
+  policy                  = aws_kms_key.alb_access_logs_key_policy.arn
 
   tags = {
     Environment = var.env
