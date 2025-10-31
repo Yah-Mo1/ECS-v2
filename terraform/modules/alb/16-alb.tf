@@ -73,7 +73,8 @@ POLICY
 
 
 resource "aws_s3_bucket" "alb_access_logs" {
-  bucket        = "${var.env}-lb-logs-1234567890"
+  # Include account ID to ensure global uniqueness
+  bucket        = "${var.env}-lb-logs-${data.aws_caller_identity.current.account_id}"
   force_destroy = true
   tags = {
     Environment = var.env
@@ -279,6 +280,12 @@ resource "aws_lb" "this" {
   enable_deletion_protection = false
   drop_invalid_header_fields = true
 
+  # Ensure bucket policy is in place before ALB tries to configure access logs
+  depends_on = [
+    aws_s3_bucket_policy.alb_access_logs_policy,
+    aws_s3_bucket_public_access_block.alb_access_logs_public_access_block,
+    aws_s3_bucket_server_side_encryption_configuration.good_sse_1
+  ]
 
   tags = {
     Environment = var.env
