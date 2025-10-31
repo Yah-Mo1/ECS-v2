@@ -1,70 +1,73 @@
 data "aws_caller_identity" "current" {}
 
+#KMS key policy for ALB access logs
+data "aws_iam_policy_document" "alb_access_logs_key_policy" {
+  statement {
+    sid    = "EnableRootPermissions"
+    effect = "Allow"
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+    actions   = ["kms:*"]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "AllowELBLogDelivery"
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["logdelivery.elasticloadbalancing.amazonaws.com"]
+    }
+    actions = [
+      "kms:Encrypt",
+      "kms:GenerateDataKey*"
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "AllowS3UseOfTheKey"
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["s3.amazonaws.com"]
+    }
+    actions = [
+      "kms:Decrypt",
+      "kms:Encrypt",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey"
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "AllowSNSServiceUse"
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["sns.amazonaws.com"]
+    }
+    actions = [
+      "kms:Decrypt",
+      "kms:Encrypt",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey"
+    ]
+    resources = ["*"]
+  }
+}
 
 #KMS Key for ALB access logs
 resource "aws_kms_key" "alb_access_logs_key" {
   description             = "KMS key for ALB access logs"
   enable_key_rotation     = true
   deletion_window_in_days = 7
-
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Id      = "default"
-    Statement = [
-      {
-        Sid    = "EnableRootPermissions"
-        Effect = "Allow"
-        Principal = {
-          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
-        }
-        Action   = "kms:*"
-        Resource = "*"
-      },
-      {
-        Sid    = "AllowELBLogDelivery"
-        Effect = "Allow"
-        Principal = {
-          Service = "logdelivery.elasticloadbalancing.amazonaws.com"
-        }
-        Action = [
-          "kms:Encrypt",
-          "kms:GenerateDataKey*"
-        ]
-        Resource = "*"
-      },
-      {
-        Sid    = "AllowS3UseOfTheKey"
-        Effect = "Allow"
-        Principal = {
-          Service = "s3.amazonaws.com"
-        }
-        Action = [
-          "kms:Decrypt",
-          "kms:Encrypt",
-          "kms:ReEncrypt*",
-          "kms:GenerateDataKey*",
-          "kms:DescribeKey"
-        ]
-        Resource = "*"
-      },
-      {
-        Sid    = "AllowSNSServiceUse"
-        Effect = "Allow"
-        Principal = {
-          Service = "sns.amazonaws.com"
-        }
-        Action = [
-          "kms:Decrypt",
-          "kms:Encrypt",
-          "kms:ReEncrypt*",
-          "kms:GenerateDataKey*",
-          "kms:DescribeKey"
-        ]
-        Resource = "*"
-      }
-    ]
-  })
+  policy                  = data.aws_iam_policy_document.alb_access_logs_key_policy.json
 
   tags = {
     Environment = var.env
@@ -83,16 +86,16 @@ resource "aws_s3_bucket" "alb_access_logs" {
 }
 
 #S3 Bucket Server Side Encryption Configuration
-#  resource "aws_s3_bucket_server_side_encryption_configuration" "good_sse_1" {
-#    bucket = aws_s3_bucket.alb_access_logs.bucket
+ resource "aws_s3_bucket_server_side_encryption_configuration" "good_sse_1" {
+   bucket = aws_s3_bucket.alb_access_logs.bucket
 
-#   rule {
-#     apply_server_side_encryption_by_default {
-#        kms_master_key_id = aws_kms_key.alb_access_logs_key.arn
-#       sse_algorithm     = "aws:kms"
-#      }
-#    }
-#  }
+  rule {
+    apply_server_side_encryption_by_default {
+       kms_master_key_id = aws_kms_key.alb_access_logs_key.arn
+      sse_algorithm     = "aws:kms"
+     }
+   }
+ }
 
 
 
