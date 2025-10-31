@@ -9,7 +9,7 @@ revision:
         - TargetService:
             Type: AWS::ECS::Service
             Properties:
-              TaskDefinition: "arn:aws:ecs:eu-west-2:982081079659:task-definition/dev-ecs-task-definition:43"
+              TaskDefinition: ""
               LoadBalancerInfo:
                 ContainerName: "ecs-v2-container"
                 ContainerPort: 8000
