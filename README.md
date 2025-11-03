@@ -1,4 +1,4 @@
-# URL Shortener on AWS ECS
+# Blue Green Deployment using ECS
 
 A production-ready URL shortener service deployed on AWS ECS Fargate with blue/green deployments, VPC-only connectivity, WAF protection, and CI/CD automation via GitHub OIDC.
 
