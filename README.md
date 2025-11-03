@@ -120,48 +120,6 @@ CodeDeploy manages blue/green deployments with:
 - **Canary deployment** option (currently configured as `ECSAllAtOnce`, can be changed to `ECSCanary10Percent5Minutes`)
 - **Health check path:** `/healthz`
 
-## Infrastructure Details
-
-### VPC Architecture
-
-- **Public subnets:** ALB only
-- **Private subnets:** ECS tasks (no public IPs)
-- **VPC Endpoints:**
-  - ECR (API + DKR) — Interface endpoints for pulling images
-  - S3 — Gateway endpoint for state and artifacts
-  - DynamoDB — Gateway endpoint for table access
-  - CloudWatch Logs — Interface endpoint (if configured)
-- **No NAT Gateways:** All AWS service access via VPC endpoints
-
-### Application Configuration
-
-- **Container port:** 8080
-- **Environment variable:** `TABLE_NAME` (DynamoDB table name)
-- **Health check:** `GET /healthz` returns `{"status": "ok"}`
-- **ECS Task Role:** Limited to DynamoDB `GetItem` and `PutItem`
-- **ECS Execution Role:** ECR pull and CloudWatch Logs write permissions
-
-### DynamoDB
-
-- **Billing mode:** PAY_PER_REQUEST
-- **Encryption:** KMS CMK
-- **Point-in-time recovery (PITR):** Enabled
-- **Table structure:**
-  - Partition key: `short_id` (string)
-  - Attributes: `url` (string)
-
-### AWS WAF
-
-WAF is attached to the ALB with the following managed rule sets:
-
-- AWS Managed Rules Common Rule Set
-- AWS Managed Rules Linux Rule Set
-- AWS Managed Rules Amazon IP Reputation List
-- AWS Managed Rules Anonymous IP List
-- AWS Managed Rules Known Bad Inputs Rule Set
-- AWS Managed Rules Unix Rule Set
-- AWS Managed Rules Windows Rule Set
-
 ## Decisions & Trade-offs
 
 ### Architecture Decisions
@@ -218,12 +176,6 @@ WAF is attached to the ALB with the following managed rule sets:
 
 - Revert Terraform commit
 - Run `terraform plan` and `terraform apply` with previous configuration
-
-## Monitoring
-
-- **CloudWatch Logs:** ECS task logs, ALB access logs (optional), WAF logs
-- **CloudWatch Metrics:** ECS service metrics, ALB request/response metrics, WAF metrics
-- **Container Insights:** Recommended for detailed ECS performance metrics
 
 ## Application Screenshot
 
