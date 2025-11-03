@@ -92,7 +92,3 @@ module "waf" {
   region       = var.region
   resource_arn = module.alb.alb_arn
 }
-
-//module "cloudfront" {
-//  source = "./modules/cloudfront"
-//}

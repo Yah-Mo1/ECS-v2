@@ -1,51 +1,12 @@
-# URL Shortener — Production-Ready AWS ECS Deployment
+# URL Shortener on AWS ECS
 
-> **The Next Generation of the CoderCo ECS Project**  
-> A production-ready URL shortener service deployed on AWS ECS Fargate with blue/green deployments, VPC-only connectivity, WAF protection, and a CI/CD pipeline powered by GitHub OIDC.
+A production-ready URL shortener service deployed on AWS ECS Fargate with blue/green deployments, VPC-only connectivity, WAF protection, and CI/CD automation via GitHub OIDC.
 
-## Overview
-
-This project implements a production-grade URL shortener service on AWS. The service accepts long URLs and returns short, unique codes that redirect to the original URLs.
-
-**Service Behavior:**
-
-- `POST /shorten` with `{"url": "https://example.com/my/very/long/path"}`
-  → Returns `{"short": "abc123ef", "url": "https://example.com/my/very/long/path"}`
-- `GET /abc123ef`
-  → HTTP 302 redirect to `https://example.com/my/very/long/path`
-- `GET /healthz`
-  → Returns `{"status": "ok"}` (used for health checks)
-
-## Application Status
-
-The application is live and accessible via HTTPS. FastAPI automatically generates interactive API documentation using Swagger UI:
-
-**Live Application:**
-
-- **Swagger UI:** `https://<your-domain>/docs`
-- **ReDoc:** `https://<your-domain>/redoc`
-- **OpenAPI JSON:** `https://<your-domain>/openapi.json`
-
-### Interactive API Documentation
-
-The Swagger UI provides interactive documentation for all endpoints:
-
-- **GET `/healthz`** — Health check endpoint (returns `{"status": "ok"}`)
-- **POST `/shorten`** — Create a short URL from a long URL
-  - Request body: `{"url": "https://example.com/very/long/url"}`
-  - Response: `{"short": "abc123ef", "url": "https://example.com/very/long/url"}`
-- **GET `/{short_id}`** — Resolve short ID to original URL (returns HTTP 302 redirect)
-
-The API documentation includes:
-
-- **FastAPI** version 0.1.0
-- **OpenAPI Specification** 3.1
-- Request/response schemas (`ShortenPayload`, `ValidationError`, etc.)
-- Interactive testing capability directly from the browser
-
-## Architecture Highlights
+## Architecture
 
 ![Architecture](images/architecture-diagram.png)
+
+## Architecture Highlights
 
 ### Core Infrastructure
 
@@ -70,36 +31,11 @@ The API documentation includes:
 ```
 url-shortener-app/
 ├── app/                    # Python FastAPI application
-│   ├── src/               # Application source code
-│   ├── tests/             # Unit tests
-│   ├── Dockerfile         # Container image definition
-│   └── requirements.txt   # Python dependencies
-├── terraform/             # Infrastructure as Code
-│   ├── modules/           # Reusable Terraform modules
-│   │   ├── networking/    # VPC, subnets, routing (VPC endpoints)
-│   │   ├── ecs/           # ECS cluster, task definitions, service
-│   │   ├── alb/           # Application Load Balancer
-│   │   ├── waf/           # AWS WAF web ACL
-│   │   ├── dynamodb/      # DynamoDB table
-│   │   ├── codedeploy/    # CodeDeploy app & deployment group
-│   │   ├── endpoints/     # VPC endpoints configuration
-│   │   ├── route53/       # DNS configuration (optional)
-│   │   └── autoscaling/   # ECS service autoscaling
-│   ├── environments/      # Environment-specific configurations
-│   │   ├── dev/
-│   │   ├── staging/
-│   │   └── prod/
-│   ├── 0-provider.tf      # AWS provider configuration
-│   ├── 1-backend.tf       # S3 backend + DynamoDB locking
-│   ├── 2-main.tf          # Module wiring
-│   ├── 3-variables.tf     # Variable definitions
-│   └── 4-outputs.tf       # Output values
-├── .github/workflows/     # GitHub Actions CI/CD
-│   ├── ci.yaml           # Build, test, scan, push to ECR
-│   ├── tfplan.yaml        # Terraform plan with security scans
-│   ├── tfapply.yaml       # Terraform apply
-│   └── tfdestroy.yaml     # Infrastructure teardown
-└── README.md             # This file
+├── terraform/              # Infrastructure as Code (Terraform modules)
+├── deployment/             # CodeDeploy configuration
+├── .github/workflows/      # GitHub Actions CI/CD pipelines
+├── images/                 # Architecture diagrams and screenshots
+└── README.md
 ```
 
 ## Getting Started
@@ -110,81 +46,6 @@ url-shortener-app/
 - Terraform >= 1.12.2
 - Docker (for local testing)
 - GitHub repository with Actions enabled
-
-### Initial Setup
-
-1. **Configure Terraform Backend**
-
-   The Terraform state is stored in S3 with State locking. Configure the backend in `terraform/1-backend.tf`:
-
-   ```bash
-   cd terraform
-   terraform init
-   ```
-
-2. **Set Up GitHub OIDC**
-
-   Create an IAM role in AWS that trusts GitHub's OIDC provider:
-
-   ```json
-   {
-     "Version": "2012-10-17",
-     "Statement": [
-       {
-         "Effect": "Allow",
-         "Principal": {
-           "Federated": "arn:aws:iam::<account-id>:oidc-provider/token.actions.githubusercontent.com"
-         },
-         "Action": "sts:AssumeRoleWithWebIdentity",
-         "Condition": {
-           "StringEquals": {
-             "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
-           },
-           "StringLike": {
-             "token.actions.githubusercontent.com:sub": "repo:<your-github-org>/<your-repo>:*"
-           }
-         }
-       }
-     ]
-   }
-   ```
-
-   Add the role ARN as a GitHub secret: `AWS_IAM_ROLE_ARN`
-
-3. **Configure Environment Variables**
-
-   Update `terraform/environments/dev/dev.terraform.tfvars` with your configuration values.
-
-### Local Development & Testing
-
-You can test the application locally before deploying:
-
-```bash
-cd app
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn src.main:app --reload
-```
-
-Run tests:
-
-```bash
-pytest tests/
-```
-
-**Tip:** Use [LocalStack](https://localstack.cloud/) to test Terraform configurations and CI/CD flows locally without incurring AWS costs:
-
-```bash
-# Install LocalStack
-pip install localstack
-
-# Start LocalStack services
-localstack start -d
-
-# Configure AWS CLI to use LocalStack
-export AWS_ENDPOINT_URL=http://localhost:4566
-```
 
 ## CI/CD Pipeline
 
@@ -241,20 +102,14 @@ cd terraform
 
 # Initialise and select workspace
 terraform init
-terraform workspace select dev || terraform workspace new dev
+terraform workspace select environment || terraform workspace new environment
 
 # Plan
-terraform plan -var-file=environments/dev/dev.terraform.tfvars
+terraform plan -var-file=environments/environment/environment.terraform.tfvars
 
 # Apply
-terraform apply -var-file=environments/dev/dev.terraform.tfvars
+terraform apply -var-file=environments/environment/environment.terraform.tfvars
 ```
-
-### Deployment via GitHub Actions
-
-1. Push code to trigger CI workflow (or run manually)
-2. Run "Terraform Plan" workflow and review the plan
-3. Run "Terraform Apply" workflow to deploy
 
 ### Blue/Green Deployments
 
@@ -329,20 +184,6 @@ WAF is attached to the ALB with the following managed rule sets:
 - **VPC Endpoints:** Interface endpoints incur hourly charges (~$7/month + data processing)
 - **ALB + WAF:** Fixed hourly costs + per-GB/request charges
 - **DynamoDB PAY_PER_REQUEST:** Pay only for actual usage, but storage costs apply
-
-## Operations & Troubleshooting
-
-### Health Checks
-
-- Health check endpoint: `GET /healthz`
-- Target group health checks: Configured to use `/healthz` path
-- Health check interval: 30 seconds (default)
-
-### Logs
-
-- **ECS Task Logs:** CloudWatch Logs group `/ecs/<env>-<service-name>`
-- **ALB Access Logs:** Can be enabled for request logging
-- **WAF Logs:** CloudWatch Logs group `aws-waf-log-group` (if enabled)
 
 ### Common Issues
 

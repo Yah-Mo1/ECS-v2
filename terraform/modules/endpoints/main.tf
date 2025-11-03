@@ -64,3 +64,15 @@ resource "aws_vpc_endpoint" "dynamodb_endpoint" {
   vpc_endpoint_type = "Gateway"
   route_table_ids   = var.private_route_table_ids
 }
+
+
+#CloudWatch Logs VPC Endpoint
+resource "aws_vpc_endpoint" "cloudwatch_logs" {
+  vpc_id            = var.vpc_id
+  service_name      = "com.amazonaws.${var.region}.logs"
+  vpc_endpoint_type = "Interface"
+  private_dns_enabled = true
+
+  security_group_ids = [aws_security_group.vpc_endpoints.id]
+  subnet_ids         = var.private_subnet_ids
+}
