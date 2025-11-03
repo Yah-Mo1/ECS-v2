@@ -1,7 +1,7 @@
 [
   {
     "name": "${container_name}",
-    "image": "${image_url}:latest",
+    "image": "${image_url}:${tag}",
     "cpu": ${cpu},
     "memory": ${memory},
     "essential": true,

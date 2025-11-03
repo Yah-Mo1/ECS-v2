@@ -197,6 +197,7 @@ resource "aws_ecs_task_definition" "ecs-task-definition" {
     memory         = var.ecs_container_memory
     ecs_log_group  = aws_cloudwatch_log_group.ecs_log_group.name
     logs_prefix    = aws_cloudwatch_log_group.ecs_log_group.name
+    tag            = "latest"
     environment = [
       { name = "TABLE_NAME", value = var.dynamodb_table_name },
       { name = "AWS_REGION", value = var.region },
@@ -222,7 +223,8 @@ resource "aws_ecs_task_definition" "ecs-task-definition-production" {
   memory                   = var.ecs_task_memory
   container_definitions = templatefile("${path.module}/task_def_init.tpl", {
     container_name = var.container_name
-    image_url      = "982081079659.dkr.ecr.eu-west-2.amazonaws.com/ecs-v2-ecr:latest"
+    image_url      = data.aws_ecr_repository.this.repository_url
+    tag            = "v2.0.0"
     cpu            = var.ecs_container_cpu
     memory         = var.ecs_container_memory
     ecs_log_group  = aws_cloudwatch_log_group.ecs_log_group.name
